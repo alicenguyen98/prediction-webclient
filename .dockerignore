@@ -1,0 +1,4 @@
+# ignore pycache
+prediction_webclient/__pycache__
+# ignore db
+prediction_webclient/db

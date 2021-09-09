@@ -1,0 +1,22 @@
+{
+    "endpoints": {
+        "watson": [{
+            "name": "",
+            "endpoint": "",
+            "api_key": "",
+            "param_names": []
+        }],
+        "prediction_server": [{
+            "name": "",
+            "endpoint": "",
+            "model": "",
+            "param_names": []
+        }]
+    },
+    "db": {
+        "rating_areas": "/path/to/file.csv",
+        "project_index_rates": "/path/to/file.csv"
+    },
+    "host": "0.0.0.0",
+    "port": 80
+}

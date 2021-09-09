@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Google font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@700&family=Kaisei+Opti&family=Roboto&display=swap" rel="stylesheet">
+    <!-- CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+    <link href="./css/main.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Main -->
+        <div id="main">
+            <div id="form-background">
+                <h1>Predict health insurance premium</h1>
+                <form action="javascript:app.submit_form();">
+                    <div class="mb-3">
+                        <label class="form-label" for="state">State</label>
+                        <select class="form-select" id="state" name="state" v-model="form.state" v-on:change="refreshCounties()" required>
+                            <option v-for="state in form.select_fields.states" :value="state.value">{{ state.label }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="country">County</label>
+                        <select class="form-select" id="county" name="county" v-model="form.county" required>
+                            <option v-for="county in form.select_fields.counties" :value="county.value">{{ county.label }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="age">Age</label>
+                        <input class="form-control" type="number" id="age" name="age" v-model="form.age" min="0" max="100" step="1" required>
+                    </div>
+                    <label class="form-label">Smoker</label>
+                    <div class="form-check">
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="smoker" id="smoker-true" v-model="form.smoker" value="true">
+                            <label class="form-check-label" for="smoker-true">Yes</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="smoker" id="smoker-false" v-model="form.smoker" value="false">
+                            <label class="form-check-label" for="smoker-false">No</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="metal-level">Metal level</label>
+                        <tooltip-icon :title="tooltips.metal_levels"></tooltip-icon>
+                        <select class="form-select" id="metal-level" name="metal-level" v-model="form.metal_level" required>
+                            <option v-for="metal in form.select_fields.metal_levels" :value="metal.value">{{ metal.label }}</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="plan-type">Plan network type</label>
+                        <tooltip-icon :title="tooltips.plan_types"></tooltip-icon>
+                        <select class="form-select" id="plan-type" name="plan-type" v-model="form.plan_type" required>
+                            <option v-for="plan in form.select_fields.plan_types" :value="plan.value">{{ plan.label }}</option>
+                        </select>
+                    </div>
+                    <br>
+                    <div class="d-flex justify-content-center">
+                        <button type="submit" class="btn btn-primary">Predict</button>
+                    </div>
+                </form>
+            </div>
+            <div id="result">
+                <!-- Loading -->
+                <div v-if="loading" class="overlay">
+                    <div class="lds-spinner">
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                        <div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Modal -->
+        <div id="modal" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="modalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 v-if="error != null" class="modal-title">Error</h5>
+                        <h5 v-else class="modal-title">Monthly premium estimates</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <span aria-hidden="true">&times;</span>
+                                </button>
+                    </div>
+                    <div class="modal-body">
+                        <div v-if="error != null">
+                            <h3 class="error-message">{{error}}</h3>
+                        </div>
+                        <div v-else>
+                            <div v-for="pred in predictions" class="prediction-result">
+                                <h3>{{pred.name}}</h3>
+                                <h4>{{formatCurrency(pred.value)}}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="./js/index.js"></script>
+</body>
+
+</html>
